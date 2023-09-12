@@ -1,44 +1,41 @@
 import Phaser from "phaser";
+import SceneKeys from "../consts/SceneKeys";
+import AnimationKeys from "../consts/AnimationKeys";
+import TextureKeys from "../consts/TextureKeys";
 
 export default class Game extends Phaser.Scene {
-  constructor() {
-    super("game");
-  }
+  private background!: Phaser.GameObjects.TileSprite;
 
-  preload() {
-    this.load.image("background", "house/bg_repeat_340x640.png");
-    this.load.atlas(
-      "rocket-mouse",
-      "characters/rocket-mouse.png",
-      "characters/rocket-mouse.json",
-    );
+  constructor() {
+    super(SceneKeys.Game);
   }
 
   create() {
-    this.anims.create({
-      key: "rocket-mouse-run",
-      frames: this.anims.generateFrameNames("rocket-mouse", {
-        start: 1,
-        end: 4,
-        prefix: "rocketmouse_run",
-        zeroPad: 2,
-        suffix: "@2x.png",
-      }),
-      frameRate: 10,
-      repeat: -1,
-    });
-
     const width = this.scale.width;
     const height = this.scale.height;
-    this.add.tileSprite(0, 0, width, height, "background").setOrigin(0);
-    this.add.image(0, 0, "background").setOrigin(0, 0);
-    this.add
+    this.background = this.add
+      .tileSprite(0, 0, width, height, TextureKeys.BackGround)
+      .setOrigin(0, 0)
+      .setScrollFactor(0, 0);
+    const mouse = this.physics.add
       .sprite(
         width * 0.5,
-        height * 0.5,
-        "rocket-mouse",
+        height - 30,
+        TextureKeys.RocketMouse,
         "rocketmouse_fly01.png",
       )
-      .play("rocket-mouse-run");
+      .setOrigin(0.5, 1)
+      .play(AnimationKeys.RocketMouseRun);
+    const body = mouse.body as Phaser.Physics.Arcade.Body;
+    body.setCollideWorldBounds(true);
+    body.setVelocityX(200);
+    this.physics.world.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height - 30);
+
+    this.cameras.main.startFollow(mouse);
+    this.cameras.main.setBounds(0, 0, Number.MAX_SAFE_INTEGER, height);
+  }
+
+  update(t: number, dt: number) {
+    this.background.setTilePosition(this.cameras.main.scrollX);
   }
 }
